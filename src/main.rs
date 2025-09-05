@@ -1,4 +1,5 @@
 mod commands;
+mod scheduled_tasks;
 
 use std::env;
 
@@ -75,6 +76,10 @@ impl EventHandler for Handler {
         //         .await;
 
         // println!("I created the following global slash command: {guild_command:#?}");
+
+        // 定期タスクを開始
+        scheduled_tasks::start_scheduled_tasks(ctx.clone()).await;
+        println!("Scheduled tasks have been started.");
     }
 }
 
