@@ -23,6 +23,10 @@ impl EventHandler for Handler {
                     commands::modal::run(&ctx, &command).await.unwrap();
                     None
                 }
+                "mt" => {
+                    commands::marimo::run(&ctx, &command).await.unwrap();
+                    None
+                }
                 "count" => {
                     commands::count::run(&ctx, &command).await.unwrap();
                     None
@@ -58,6 +62,7 @@ impl EventHandler for Handler {
                     commands::ping::register(),
                     commands::modal::register(),
                     commands::count::register(),
+                    commands::marimo::register(),
                 ],
             )
             .await;
