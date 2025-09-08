@@ -1,7 +1,8 @@
 mod commands;
+mod config;
 mod scheduled_tasks;
 
-use std::env;
+use config::Config;
 
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
@@ -48,12 +49,9 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
-        let guild_id = GuildId::new(
-            env::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse()
-                .expect("GUILD_ID must be an integer"),
-        );
+        // 設定ファイルを読み込む
+        let config = Config::load().expect("Failed to load config.json");
+        let guild_id = GuildId::new(config.guild_id);
 
         // Guild コマンドをセットする
         let commands = guild_id
@@ -77,16 +75,18 @@ impl EventHandler for Handler {
 
         // println!("I created the following global slash command: {guild_command:#?}");
 
-        // 定期タスクを開始
-        scheduled_tasks::start_scheduled_tasks(ctx.clone()).await;
+        // スケジュールタスクを開始
+        let tasks = scheduled_tasks::create_scheduled_tasks(&config.scheduled_tasks);
+        scheduled_tasks::start_scheduled_tasks(ctx.clone(), tasks).await;
         println!("Scheduled tasks have been started.");
     }
 }
 
 #[tokio::main]
 async fn main() {
-    // Configure the client with your Discord bot token in the environment.
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    // 設定ファイルを読み込む
+    let config = Config::load().expect("Failed to load config.json. Please create config.json based on config.example.json");
+    let token = config.discord_token.clone();
 
     // Build our client.
     let mut client = Client::builder(token, GatewayIntents::empty())

@@ -935,9 +935,12 @@ dependencies = [
 name = "nidaime-takohachi"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "chrono-tz",
  "rand",
+ "serde",
+ "serde_json",
  "serenity",
  "tokio",
 ]
