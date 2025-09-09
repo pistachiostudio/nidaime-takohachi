@@ -42,22 +42,43 @@ impl ScheduledTask for DeleteMessageTask {
             // メッセージを取得して削除対象をカウント
             let mut pinned_count = 0;
             let mut messages_to_delete = Vec::new();
+            let mut last_message_id = None;
 
-            // メッセージを取得（最大100件）
-            let builder = GetMessages::new().limit(100);
-            let messages = channel.messages(&ctx.http, builder).await?;
+            // ページネーションでメッセージを取得
+            loop {
+                let mut builder = GetMessages::new().limit(100);
+                
+                if let Some(last_id) = last_message_id {
+                    builder = builder.before(last_id);
+                }
 
-            for message in messages {
-                // メッセージの作成時刻をUNIX時間に変換
-                let message_timestamp = message.timestamp.unix_timestamp() as u64;
+                let messages = channel.messages(&ctx.http, builder).await?;
+                
+                if messages.is_empty() {
+                    break;
+                }
 
-                // 古いメッセージかチェック
-                if now - message_timestamp > delete_after_secs {
-                    if message.pinned {
-                        pinned_count += 1;
-                    } else {
-                        messages_to_delete.push(message.id);
+                for message in &messages {
+                    // メッセージの作成時刻をUNIX時間に変換
+                    let message_timestamp = message.timestamp.unix_timestamp() as u64;
+
+                    // 古いメッセージかチェック（削除対象期間内）
+                    if now - message_timestamp > delete_after_secs {
+                        if message.pinned {
+                            pinned_count += 1;
+                        } else {
+                            messages_to_delete.push(message.id);
+                        }
                     }
+                    // 削除対象期間外（新しい）メッセージはスキップして継続
+                }
+
+                // 最後のメッセージIDを更新
+                last_message_id = messages.last().map(|m| m.id);
+
+                // 100件未満の場合は最後のページなので終了
+                if messages.len() < 100 {
+                    break;
                 }
             }
 

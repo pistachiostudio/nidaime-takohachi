@@ -17,7 +17,7 @@ struct Handler;
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::Command(command) = interaction {
-            println!("Received command interaction: {command:#?}");
+            // println!("Received command interaction: {command:#?}");
 
             let content = match command.data.name.as_str() {
                 "ping" => Some(commands::ping::run(&command.data.options())),
@@ -85,7 +85,9 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     // 設定ファイルを読み込む
-    let config = Config::load().expect("Failed to load config.json. Please create config.json based on config.example.json");
+    let config = Config::load().expect(
+        "Failed to load config.json. Please create config.json based on config.example.json",
+    );
     let token = config.discord_token.clone();
 
     // Build our client.
