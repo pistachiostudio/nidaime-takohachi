@@ -63,7 +63,8 @@ impl ScheduledTask for DeleteMessageTask {
                     let message_timestamp = message.timestamp.unix_timestamp() as u64;
 
                     // 古いメッセージかチェック（削除対象期間内）
-                    if now - message_timestamp > delete_after_secs {
+                    // saturating_subを使用して、アンダーフローを防ぐ
+                    if message_timestamp < now && now.saturating_sub(message_timestamp) > delete_after_secs {
                         if message.pinned {
                             pinned_count += 1;
                         } else {

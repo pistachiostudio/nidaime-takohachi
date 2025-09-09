@@ -19,6 +19,14 @@ pub struct ScheduledTasksConfig {
     pub enable_delete_message_task: bool,
     #[serde(default)]
     pub delete_message_channels: HashMap<u64, u64>,
+    pub daily_morning_task: Option<DailyMorningTaskConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DailyMorningTaskConfig {
+    pub enabled: bool,
+    pub channel_id: u64,
+    pub message: String,
 }
 
 impl Config {
