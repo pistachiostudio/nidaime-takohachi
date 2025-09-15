@@ -1,8 +1,6 @@
 pub mod daily_morning_task;
 pub mod delete_message;
 pub mod periodic_message;
-pub mod status_report;
-pub mod tips_reminder;
 
 use std::time::Duration;
 
@@ -15,8 +13,6 @@ use crate::config::ScheduledTasksConfig;
 pub use daily_morning_task::DailyMorningTask;
 pub use delete_message::DeleteMessageTask;
 pub use periodic_message::PeriodicMessageTask;
-pub use status_report::StatusReportTask;
-pub use tips_reminder::TipsReminderTask;
 
 /// スケジュールタスクのトレイト
 #[async_trait]
@@ -42,12 +38,8 @@ pub async fn start_scheduled_tasks(ctx: Context, tasks: Vec<Box<dyn ScheduledTas
             loop {
                 // 次回実行までの秒数を取得
                 let interval = task.interval_secs();
-                
-                println!(
-                    "[{}] Next execution in {} seconds",
-                    task.name(),
-                    interval
-                );
+
+                println!("[{}] Next execution in {} seconds", task.name(), interval);
 
                 // 指定された間隔で待機
                 sleep(Duration::from_secs(interval)).await;
@@ -56,7 +48,7 @@ pub async fn start_scheduled_tasks(ctx: Context, tasks: Vec<Box<dyn ScheduledTas
                 if let Err(e) = task.execute(&ctx_clone).await {
                     eprintln!("[{}] Error during execution: {:?}", task.name(), e);
                 }
-                
+
                 // DailyMorningTaskのような時刻ベースのタスクは、
                 // 実行後に次回実行時刻を再計算する必要がある
                 // interval_secs()を毎回呼び出すことで対応
@@ -77,12 +69,6 @@ pub fn create_scheduled_tasks(config: &ScheduledTasksConfig) -> Vec<Box<dyn Sche
             "⏰ 定期メッセージ: 10分が経過しました！".to_string(),
             600,
         )));
-
-        // 30分ごとのステータスレポート
-        //tasks.push(Box::new(StatusReportTask::new(channel_id)));
-
-        // 1時間ごとのTipsリマインダー
-        //tasks.push(Box::new(TipsReminderTask::new(channel_id)));
 
         println!(
             "Created {} scheduled tasks for channel {}",
@@ -107,10 +93,11 @@ pub fn create_scheduled_tasks(config: &ScheduledTasksConfig) -> Vec<Box<dyn Sche
     // 日本時間AM 7:00の定期タスクを追加
     if let Some(morning_task_config) = &config.daily_morning_task {
         if morning_task_config.enabled {
-            tasks.push(Box::new(DailyMorningTask::new(
-                morning_task_config.channel_id,
-                morning_task_config.message.clone(),
-            )));
+            let mut task = DailyMorningTask::new(morning_task_config.channel_id);
+            if let Some(api_key) = &morning_task_config.gemini_api_key {
+                task = task.with_api_key(api_key.clone());
+            }
+            tasks.push(Box::new(task));
             println!(
                 "DailyMorningTask has been enabled for channel {} at 7:00 AM JST",
                 morning_task_config.channel_id

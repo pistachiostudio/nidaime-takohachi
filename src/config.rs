@@ -26,7 +26,7 @@ pub struct ScheduledTasksConfig {
 pub struct DailyMorningTaskConfig {
     pub enabled: bool,
     pub channel_id: u64,
-    pub message: String,
+    pub gemini_api_key: Option<String>,
 }
 
 impl Config {

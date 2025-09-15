@@ -1,6 +1,7 @@
 mod commands;
 mod config;
 mod scheduled_tasks;
+mod utils;
 
 use config::Config;
 
