@@ -1,6 +1,5 @@
 pub mod daily_morning_task;
 pub mod delete_message;
-pub mod periodic_message;
 
 use std::time::Duration;
 
@@ -12,7 +11,6 @@ use crate::config::ScheduledTasksConfig;
 
 pub use daily_morning_task::DailyMorningTask;
 pub use delete_message::DeleteMessageTask;
-pub use periodic_message::PeriodicMessageTask;
 
 /// スケジュールタスクのトレイト
 #[async_trait]
@@ -61,24 +59,6 @@ pub async fn start_scheduled_tasks(ctx: Context, tasks: Vec<Box<dyn ScheduledTas
 pub fn create_scheduled_tasks(config: &ScheduledTasksConfig) -> Vec<Box<dyn ScheduledTask>> {
     let mut tasks: Vec<Box<dyn ScheduledTask>> = Vec::new();
 
-    // チャンネルIDが設定されている場合
-    if let Some(channel_id) = config.scheduled_channel_id {
-        // 10分ごとの定期メッセージ
-        tasks.push(Box::new(PeriodicMessageTask::new(
-            channel_id,
-            "⏰ 定期メッセージ: 10分が経過しました！".to_string(),
-            600,
-        )));
-
-        println!(
-            "Created {} scheduled tasks for channel {}",
-            tasks.len(),
-            channel_id
-        );
-    } else {
-        println!("scheduled_channel_id not found in config. No scheduled tasks will be created.");
-    }
-
     // 自動メッセージ削除タスクを追加
     if config.enable_delete_message_task && !config.delete_message_channels.is_empty() {
         tasks.push(Box::new(DeleteMessageTask::with_settings(
@@ -90,7 +70,7 @@ pub fn create_scheduled_tasks(config: &ScheduledTasksConfig) -> Vec<Box<dyn Sche
         );
     }
 
-    // 日本時間AM 7:00の定期タスクを追加
+    // 日本時間AM 7:00のおざすを追加
     if let Some(morning_task_config) = &config.daily_morning_task {
         if morning_task_config.enabled {
             let mut task = DailyMorningTask::new(morning_task_config.channel_id);
