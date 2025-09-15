@@ -89,22 +89,20 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
         "https://weather.tsukumijima.net/api/forecast/city/{}",
         citycode
     );
-    
+
     let response = reqwest::get(&url).await?;
     let weather_data: WeatherResponse = response.json().await?;
-    
+
     if let Some(today_forecast) = weather_data.forecasts.first() {
         let city_name = match citycode {
             "130010" => "東京",
             "060010" => "山形",
             _ => &weather_data.title,
         };
-        
+
         Ok(format!(
             "**{}の天気**: {} - {}",
-            city_name,
-            today_forecast.telop,
-            today_forecast.detail.weather
+            city_name, today_forecast.telop, today_forecast.detail.weather
         ))
     } else {
         Ok(format!("天気情報を取得できませんでした"))
@@ -116,21 +114,21 @@ pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Erro
         "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
         ticker
     );
-    
+
     let client = reqwest::Client::new();
     let response = client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0")
         .send()
         .await?;
-    
+
     let finance_data: YahooFinanceResponse = response.json().await?;
-    
+
     if let Some(quote) = finance_data.quote_response.result.first() {
         let change_percent = quote.regular_market_change_percent;
         let sign = if change_percent >= 0.0 { "+" } else { "" };
         let ratio_str = format!("{}{}%", sign, format!("{:.2}", change_percent));
-        
+
         Ok((ratio_str, quote.regular_market_price))
     } else {
         Err("株価情報を取得できませんでした".into())
@@ -142,9 +140,9 @@ pub async fn get_trivia(api_key: &str) -> Result<String, Box<dyn Error + Send + 
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={}",
         api_key
     );
-    
+
     let prompt = "今日の面白い雑学を1つ、日本語で50文字以内で教えてください。";
-    
+
     let request_body = json!({
         "contents": [{
             "parts": [{
@@ -152,21 +150,17 @@ pub async fn get_trivia(api_key: &str) -> Result<String, Box<dyn Error + Send + 
             }]
         }]
     });
-    
+
     let client = reqwest::Client::new();
-    let response = client
-        .post(&url)
-        .json(&request_body)
-        .send()
-        .await?;
-    
+    let response = client.post(&url).json(&request_body).send().await?;
+
     let gemini_response: GeminiResponse = response.json().await?;
-    
+
     if let Some(candidate) = gemini_response.candidates.first() {
         if let Some(part) = candidate.content.parts.first() {
             return Ok(part.text.clone());
         }
     }
-    
+
     Ok("今日の雑学: 知識は力なり！".to_string())
 }

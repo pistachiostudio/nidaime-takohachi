@@ -47,13 +47,13 @@ impl ScheduledTask for DeleteMessageTask {
             // ページネーションでメッセージを取得
             loop {
                 let mut builder = GetMessages::new().limit(100);
-                
+
                 if let Some(last_id) = last_message_id {
                     builder = builder.before(last_id);
                 }
 
                 let messages = channel.messages(&ctx.http, builder).await?;
-                
+
                 if messages.is_empty() {
                     break;
                 }
@@ -64,7 +64,9 @@ impl ScheduledTask for DeleteMessageTask {
 
                     // 古いメッセージかチェック（削除対象期間内）
                     // saturating_subを使用して、アンダーフローを防ぐ
-                    if message_timestamp < now && now.saturating_sub(message_timestamp) > delete_after_secs {
+                    if message_timestamp < now
+                        && now.saturating_sub(message_timestamp) > delete_after_secs
+                    {
                         if message.pinned {
                             pinned_count += 1;
                         } else {

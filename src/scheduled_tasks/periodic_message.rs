@@ -34,15 +34,15 @@ impl ScheduledTask for PeriodicMessageTask {
 
     async fn execute(&self, ctx: &Context) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let builder = CreateMessage::new().content(&self.message);
-        
+
         self.channel_id.send_message(&ctx.http, builder).await?;
-        
+
         println!(
             "[{}] Message sent successfully to channel {}",
             self.name(),
             self.channel_id
         );
-        
+
         Ok(())
     }
 }
