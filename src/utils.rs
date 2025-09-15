@@ -156,9 +156,10 @@ pub async fn get_trivia(api_key: &str) -> Result<String, Box<dyn Error + Send + 
     let gemini_response: GeminiResponse = response.json().await?;
 
     if let Some(candidate) = gemini_response.candidates.first()
-        && let Some(part) = candidate.content.parts.first() {
-            return Ok(part.text.clone());
-        }
+        && let Some(part) = candidate.content.parts.first()
+    {
+        return Ok(part.text.clone());
+    }
 
     Ok("今日の雑学: 知識は力なり！".to_string())
 }
