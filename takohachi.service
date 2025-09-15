@@ -1,0 +1,40 @@
+[Unit]
+Description=Nidaime Takohachi Discord Bot
+Documentation=https://github.com/pistachiostudio/nidaime-takohachi
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=takohachi
+Group=takohachi
+WorkingDirectory=/opt/takohachi
+
+# 実行ファイルのパス
+ExecStart=/opt/takohachi/nidaime-takohachi
+
+# 再起動ポリシー
+Restart=always
+RestartSec=10
+
+# 環境設定
+Environment="RUST_LOG=info"
+
+# セキュリティ設定
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/takohachi
+
+# リソース制限（必要に応じて調整）
+LimitNOFILE=65536
+MemoryLimit=512M
+
+# ログ設定
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=takohachi
+
+[Install]
+WantedBy=multi-user.target
