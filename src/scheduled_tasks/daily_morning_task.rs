@@ -141,7 +141,7 @@ impl ScheduledTask for DailyMorningTask {
             now_jst.minute()
         );
 
-        let greetings = vec!["おざし。", "おざす。", "お。", "おはようございます。"];
+        let greetings = ["おざし。", "おざす。", "お。", "おはようございます。"];
         let greeting = greetings
             .choose(&mut rand::thread_rng())
             .unwrap_or(&"おはようございます。");

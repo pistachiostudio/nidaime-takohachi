@@ -71,8 +71,8 @@ pub fn create_scheduled_tasks(config: &ScheduledTasksConfig) -> Vec<Box<dyn Sche
     }
 
     // 日本時間AM 7:00のおざすを追加
-    if let Some(morning_task_config) = &config.daily_morning_task {
-        if morning_task_config.enabled {
+    if let Some(morning_task_config) = &config.daily_morning_task
+        && morning_task_config.enabled {
             let mut task = DailyMorningTask::new(morning_task_config.channel_id);
             if let Some(api_key) = &morning_task_config.gemini_api_key {
                 task = task.with_api_key(api_key.clone());
@@ -83,7 +83,6 @@ pub fn create_scheduled_tasks(config: &ScheduledTasksConfig) -> Vec<Box<dyn Sche
                 morning_task_config.channel_id
             );
         }
-    }
 
     if !tasks.is_empty() {
         println!("Total {} scheduled tasks created", tasks.len());

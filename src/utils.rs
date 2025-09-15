@@ -1,4 +1,3 @@
-use reqwest;
 use serde::Deserialize;
 use serde_json::json;
 use std::collections::HashMap;
@@ -105,7 +104,7 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
             city_name, today_forecast.telop, today_forecast.detail.weather
         ))
     } else {
-        Ok(format!("天気情報を取得できませんでした"))
+        Ok("天気情報を取得できませんでした".to_string())
     }
 }
 
@@ -127,7 +126,7 @@ pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Erro
     if let Some(quote) = finance_data.quote_response.result.first() {
         let change_percent = quote.regular_market_change_percent;
         let sign = if change_percent >= 0.0 { "+" } else { "" };
-        let ratio_str = format!("{}{}%", sign, format!("{:.2}", change_percent));
+        let ratio_str = format!("{}{:.2}%", sign, change_percent);
 
         Ok((ratio_str, quote.regular_market_price))
     } else {
@@ -156,11 +155,10 @@ pub async fn get_trivia(api_key: &str) -> Result<String, Box<dyn Error + Send + 
 
     let gemini_response: GeminiResponse = response.json().await?;
 
-    if let Some(candidate) = gemini_response.candidates.first() {
-        if let Some(part) = candidate.content.parts.first() {
+    if let Some(candidate) = gemini_response.candidates.first()
+        && let Some(part) = candidate.content.parts.first() {
             return Ok(part.text.clone());
         }
-    }
 
     Ok("今日の雑学: 知識は力なり！".to_string())
 }
