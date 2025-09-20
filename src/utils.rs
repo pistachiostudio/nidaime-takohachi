@@ -89,8 +89,32 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
         citycode
     );
 
-    let response = reqwest::get(&url).await?;
-    let weather_data: WeatherResponse = response.json().await?;
+    let response = match reqwest::get(&url).await {
+        Ok(resp) => resp,
+        Err(e) => {
+            println!(
+                "Weather API HTTP request failed - URL: {}, Error: {}",
+                url, e
+            );
+            return Err(Box::new(e));
+        }
+    };
+
+    let status = response.status();
+    if !status.is_success() {
+        println!(
+            "Weather API returned non-success status: {} for URL: {}",
+            status, url
+        );
+    }
+
+    let weather_data: WeatherResponse = match response.json().await {
+        Ok(data) => data,
+        Err(e) => {
+            println!("Failed to parse weather API JSON response - Error: {}", e);
+            return Err(Box::new(e));
+        }
+    };
 
     if let Some(today_forecast) = weather_data.forecasts.first() {
         let city_name = match citycode {
@@ -104,6 +128,10 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
             city_name, today_forecast.telop, today_forecast.detail.weather
         ))
     } else {
+        println!(
+            "Warning: Weather API returned empty forecast data for citycode: {}",
+            citycode
+        );
         Ok("天気情報を取得できませんでした".to_string())
     }
 }
@@ -115,13 +143,40 @@ pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Erro
     );
 
     let client = reqwest::Client::new();
-    let response = client
+    let response = match client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0")
         .send()
-        .await?;
+        .await
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            println!(
+                "Stock API HTTP request failed - Ticker: {}, URL: {}, Error: {}",
+                ticker, url, e
+            );
+            return Err(Box::new(e));
+        }
+    };
 
-    let finance_data: YahooFinanceResponse = response.json().await?;
+    let status = response.status();
+    if !status.is_success() {
+        println!(
+            "Stock API returned non-success status: {} for ticker: {}",
+            status, ticker
+        );
+    }
+
+    let finance_data: YahooFinanceResponse = match response.json().await {
+        Ok(data) => data,
+        Err(e) => {
+            println!(
+                "Failed to parse stock API JSON response for ticker: {} - Error: {}",
+                ticker, e
+            );
+            return Err(Box::new(e));
+        }
+    };
 
     if let Some(quote) = finance_data.quote_response.result.first() {
         let change_percent = quote.regular_market_change_percent;
@@ -130,6 +185,10 @@ pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Erro
 
         Ok((ratio_str, quote.regular_market_price))
     } else {
+        println!(
+            "Warning: Stock API returned empty result for ticker: {}",
+            ticker
+        );
         Err("株価情報を取得できませんでした".into())
     }
 }
