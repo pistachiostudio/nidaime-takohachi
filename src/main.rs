@@ -38,6 +38,10 @@ impl EventHandler for Handler {
                     commands::debug_weather::run(&ctx, &command).await.unwrap();
                     None
                 }
+                "debug_stock" => {
+                    commands::debug_stock::run(&ctx, &command).await.unwrap();
+                    None
+                }
                 _ => Some("not implemented :(".to_string()),
             };
 
@@ -69,6 +73,7 @@ impl EventHandler for Handler {
         // デバッグコマンドを条件付きで追加
         if config.debug_slash_commands {
             command_list.push(commands::debug_weather::register());
+            command_list.push(commands::debug_stock::register());
         }
 
         let commands = guild_id.set_commands(&ctx.http, command_list).await;
