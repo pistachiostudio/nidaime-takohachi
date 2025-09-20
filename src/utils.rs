@@ -20,24 +20,6 @@ struct Detail {
     weather: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct StockQuote {
-    #[serde(rename = "regularMarketPrice")]
-    regular_market_price: f64,
-    #[serde(rename = "regularMarketChangePercent")]
-    regular_market_change_percent: f64,
-}
-
-#[derive(Debug, Deserialize)]
-struct YahooFinanceResponse {
-    #[serde(rename = "quoteResponse")]
-    quote_response: QuoteResponse,
-}
-
-#[derive(Debug, Deserialize)]
-struct QuoteResponse {
-    result: Vec<StockQuote>,
-}
 
 #[derive(Debug, Deserialize)]
 struct GeminiResponse {
@@ -137,56 +119,45 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
 }
 
 pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Error + Send + Sync>> {
-    let url = format!(
-        "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
-        ticker
-    );
+    use yahoo_finance_api as yahoo;
 
-    let client = reqwest::Client::new();
-    let response = match client
-        .get(&url)
-        .header("User-Agent", "Mozilla/5.0")
-        .send()
-        .await
-    {
-        Ok(resp) => resp,
+    let provider = match yahoo::YahooConnector::new() {
+        Ok(provider) => provider,
         Err(e) => {
-            println!(
-                "Stock API HTTP request failed - Ticker: {}, URL: {}, Error: {}",
-                ticker, url, e
-            );
+            println!("Failed to create Yahoo Finance connector - Error: {}", e);
             return Err(Box::new(e));
         }
     };
 
-    let status = response.status();
-    if !status.is_success() {
-        println!(
-            "Stock API returned non-success status: {} for ticker: {}",
-            status, ticker
-        );
-    }
-
-    let finance_data: YahooFinanceResponse = match response.json().await {
-        Ok(data) => data,
+    let response = match provider.get_latest_quotes(ticker, "1d").await {
+        Ok(response) => response,
         Err(e) => {
             println!(
-                "Failed to parse stock API JSON response for ticker: {} - Error: {}",
+                "Failed to get stock quotes for ticker: {} - Error: {}",
                 ticker, e
             );
             return Err(Box::new(e));
         }
     };
 
-    if let Some(quote) = finance_data.quote_response.result.first() {
-        let change_percent = quote.regular_market_change_percent;
+    let quotes = response.quotes()?;
+
+    if let Some(quote) = quotes.first() {
+        let current_price = quote.close;
+        let previous_close = quote.open;
+        let change_percent = if previous_close != 0.0 {
+            ((current_price - previous_close) / previous_close) * 100.0
+        } else {
+            0.0
+        };
+
         let sign = if change_percent >= 0.0 { "+" } else { "" };
         let ratio_str = format!("{}{:.2}%", sign, change_percent);
 
-        Ok((ratio_str, quote.regular_market_price))
+        Ok((ratio_str, current_price))
     } else {
         println!(
-            "Warning: Stock API returned empty result for ticker: {}",
+            "Warning: No stock data found for ticker: {}",
             ticker
         );
         Err("株価情報を取得できませんでした".into())
