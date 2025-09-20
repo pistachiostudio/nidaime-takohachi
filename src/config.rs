@@ -10,6 +10,8 @@ pub struct Config {
     pub guild_id: u64,
     #[serde(default)]
     pub scheduled_tasks: ScheduledTasksConfig,
+    #[serde(default)]
+    pub debug_slash_commands: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

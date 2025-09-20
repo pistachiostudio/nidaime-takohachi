@@ -34,6 +34,10 @@ impl EventHandler for Handler {
                     commands::count::run(&ctx, &command).await.unwrap();
                     None
                 }
+                "debug_weather" => {
+                    commands::debug_weather::run(&ctx, &command).await.unwrap();
+                    None
+                }
                 _ => Some("not implemented :(".to_string()),
             };
 
@@ -55,17 +59,19 @@ impl EventHandler for Handler {
         let guild_id = GuildId::new(config.guild_id);
 
         // Guild コマンドをセットする
-        let commands = guild_id
-            .set_commands(
-                &ctx.http,
-                vec![
-                    commands::ping::register(),
-                    commands::modal::register(),
-                    commands::count::register(),
-                    commands::marimo::register(),
-                ],
-            )
-            .await;
+        let mut command_list = vec![
+            commands::ping::register(),
+            commands::modal::register(),
+            commands::count::register(),
+            commands::marimo::register(),
+        ];
+
+        // デバッグコマンドを条件付きで追加
+        if config.debug_slash_commands {
+            command_list.push(commands::debug_weather::register());
+        }
+
+        let commands = guild_id.set_commands(&ctx.http, command_list).await;
 
         println!("I now have the following guild slash commands: {commands:#?}");
 
