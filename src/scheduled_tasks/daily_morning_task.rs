@@ -65,12 +65,14 @@ impl DailyMorningTask {
 
         let what_today = utils::get_what_today(month, day);
 
-        let tokyo_weather = utils::get_weather("130010")
-            .await
-            .unwrap_or_else(|_| "東京の天気情報を取得できませんでした".to_string());
-        let yamagata_weather = utils::get_weather("060010")
-            .await
-            .unwrap_or_else(|_| "山形の天気情報を取得できませんでした".to_string());
+        let tokyo_weather = match utils::get_weather("130010").await {
+            Ok(weather_info) => weather_info,
+            Err(e) => format!("東京の天気情報を取得できませんでした: {}", e),
+        };
+        let yamagata_weather = match utils::get_weather("060010").await {
+            Ok(weather_info) => weather_info,
+            Err(e) => format!("山形の天気情報を取得できませんでした: {}", e),
+        };
 
         let trivia = if let Some(api_key) = &self.gemini_api_key {
             utils::get_trivia(api_key)
