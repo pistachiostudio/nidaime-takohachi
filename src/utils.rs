@@ -90,10 +90,19 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
         );
     }
 
-    let weather_data: WeatherResponse = match response.json().await {
+    let response_text = match response.text().await {
+        Ok(text) => text,
+        Err(e) => {
+            println!("Failed to get response text - Error: {}", e);
+            return Err(Box::new(e));
+        }
+    };
+
+    let weather_data: WeatherResponse = match serde_json::from_str(&response_text) {
         Ok(data) => data,
         Err(e) => {
             println!("Failed to parse weather API JSON response - Error: {}", e);
+            println!("Response text: {}", response_text);
             return Err(Box::new(e));
         }
     };
