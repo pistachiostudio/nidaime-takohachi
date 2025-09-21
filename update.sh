@@ -62,7 +62,8 @@ fi
 
 # 3. ビルド
 log_info "アプリケーションをビルドしています..."
-sudo -u $(logname) cargo build --release
+# ユーザーの環境でcargoを実行（PATHを保持）
+sudo -u $(logname) bash -c 'source $HOME/.cargo/env 2>/dev/null || true; cargo build --release'
 if [ $? -eq 0 ]; then
     log_info "ビルドが正常に完了しました"
 else
