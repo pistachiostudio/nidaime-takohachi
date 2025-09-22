@@ -35,7 +35,6 @@ struct Temperature {
     celsius: Option<String>,
 }
 
-
 #[derive(Debug, Deserialize)]
 struct ChanceOfRain {
     #[serde(rename = "T06_12")]
@@ -141,28 +140,38 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
         let city_name = &weather_data.location.city;
 
         // 天気情報から全角スペースを削除
-        let weather = today_forecast.detail.weather
+        let weather = today_forecast
+            .detail
+            .weather
             .as_ref()
             .map(|w| w.replace("　", ""))
             .unwrap_or_else(|| today_forecast.telop.clone());
 
         // 最高気温を取得
-        let max_temp = today_forecast.temperature.max
+        let max_temp = today_forecast
+            .temperature
+            .max
             .as_ref()
             .and_then(|t| t.celsius.as_ref())
             .map(|c| c.as_str())
             .unwrap_or("--");
 
         // 降水確率を取得
-        let morning_rain = today_forecast.chance_of_rain.morning
+        let morning_rain = today_forecast
+            .chance_of_rain
+            .morning
             .as_ref()
             .map(|r| r.as_str())
             .unwrap_or("--%");
-        let afternoon_rain = today_forecast.chance_of_rain.afternoon
+        let afternoon_rain = today_forecast
+            .chance_of_rain
+            .afternoon
             .as_ref()
             .map(|r| r.as_str())
             .unwrap_or("--%");
-        let night_rain = today_forecast.chance_of_rain.night
+        let night_rain = today_forecast
+            .chance_of_rain
+            .night
             .as_ref()
             .map(|r| r.as_str())
             .unwrap_or("--%");
