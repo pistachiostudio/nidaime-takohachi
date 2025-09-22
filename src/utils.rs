@@ -7,17 +7,48 @@ use std::error::Error;
 struct WeatherResponse {
     title: String,
     forecasts: Vec<Forecast>,
+    location: Location,
 }
 
 #[derive(Debug, Deserialize)]
 struct Forecast {
     telop: String,
     detail: Detail,
+    temperature: TemperatureAll,
+    #[serde(rename = "chanceOfRain")]
+    chance_of_rain: ChanceOfRain,
 }
 
 #[derive(Debug, Deserialize)]
 struct Detail {
-    weather: String,
+    weather: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TemperatureAll {
+    // min は null であることがあり、初代タコ八でも採用していないので外している
+    max: Option<Temperature>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Temperature {
+    celsius: Option<String>,
+}
+
+
+#[derive(Debug, Deserialize)]
+struct ChanceOfRain {
+    #[serde(rename = "T06_12")]
+    morning: Option<String>,
+    #[serde(rename = "T12_18")]
+    afternoon: Option<String>,
+    #[serde(rename = "T18_24")]
+    night: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Location {
+    city: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -107,15 +138,38 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
     };
 
     if let Some(today_forecast) = weather_data.forecasts.first() {
-        let city_name = match citycode {
-            "130010" => "東京",
-            "060010" => "山形",
-            _ => &weather_data.title,
-        };
+        let city_name = &weather_data.location.city;
+
+        // 天気情報から全角スペースを削除
+        let weather = today_forecast.detail.weather
+            .as_ref()
+            .map(|w| w.replace("　", ""))
+            .unwrap_or_else(|| today_forecast.telop.clone());
+
+        // 最高気温を取得
+        let max_temp = today_forecast.temperature.max
+            .as_ref()
+            .and_then(|t| t.celsius.as_ref())
+            .map(|c| c.as_str())
+            .unwrap_or("--");
+
+        // 降水確率を取得
+        let morning_rain = today_forecast.chance_of_rain.morning
+            .as_ref()
+            .map(|r| r.as_str())
+            .unwrap_or("--%");
+        let afternoon_rain = today_forecast.chance_of_rain.afternoon
+            .as_ref()
+            .map(|r| r.as_str())
+            .unwrap_or("--%");
+        let night_rain = today_forecast.chance_of_rain.night
+            .as_ref()
+            .map(|r| r.as_str())
+            .unwrap_or("--%");
 
         Ok(format!(
-            "**{}の天気**: {} - {}",
-            city_name, today_forecast.telop, today_forecast.detail.weather
+            "- {}: {}\n  - 🌡️ 最高気温: {} ℃\n  - ☔ 朝: {} | 昼: {} | 晩: {}",
+            city_name, weather, max_temp, morning_rain, afternoon_rain, night_rain
         ))
     } else {
         println!(
