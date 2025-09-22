@@ -20,7 +20,6 @@ struct Detail {
     weather: String,
 }
 
-
 #[derive(Debug, Deserialize)]
 struct GeminiResponse {
     candidates: Vec<Candidate>,
@@ -165,10 +164,7 @@ pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Erro
 
         Ok((ratio_str, current_price))
     } else {
-        println!(
-            "Warning: No stock data found for ticker: {}",
-            ticker
-        );
+        println!("Warning: No stock data found for ticker: {}", ticker);
         Err("株価情報を取得できませんでした".into())
     }
 }
