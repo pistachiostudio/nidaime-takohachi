@@ -5,7 +5,6 @@ use std::error::Error;
 
 #[derive(Debug, Deserialize)]
 struct WeatherResponse {
-    title: String,
     forecasts: Vec<Forecast>,
     location: Location,
 }
@@ -160,20 +159,17 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
         let morning_rain = today_forecast
             .chance_of_rain
             .morning
-            .as_ref()
-            .map(|r| r.as_str())
+            .as_deref()
             .unwrap_or("--%");
         let afternoon_rain = today_forecast
             .chance_of_rain
             .afternoon
-            .as_ref()
-            .map(|r| r.as_str())
+            .as_deref()
             .unwrap_or("--%");
         let night_rain = today_forecast
             .chance_of_rain
             .night
-            .as_ref()
-            .map(|r| r.as_str())
+            .as_deref()
             .unwrap_or("--%");
 
         Ok(format!(
