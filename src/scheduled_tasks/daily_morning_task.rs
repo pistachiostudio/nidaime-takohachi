@@ -96,7 +96,7 @@ impl DailyMorningTask {
             match utils::get_stock_price(ticker).await {
                 Ok((ratio, price)) => {
                     market_lines.push(format!(
-                        "- {} **{}:** {:.1}{} ({})",
+                        "- {} **{}:** {}{} ({})",
                         icon, name, price, unit, ratio
                     ));
                 }

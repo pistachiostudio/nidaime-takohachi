@@ -185,7 +185,30 @@ pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send 
     }
 }
 
-pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Error + Send + Sync>> {
+fn format_price_with_comma(price: f64) -> String {
+    let price_str = format!("{:.1}", price);
+    let parts: Vec<&str> = price_str.split('.').collect();
+    let integer_part = parts[0];
+    let decimal_part = parts.get(1).unwrap_or(&"0");
+
+    let mut result = String::new();
+    let chars: Vec<char> = integer_part.chars().collect();
+    let len = chars.len();
+
+    for (i, c) in chars.iter().enumerate() {
+        result.push(*c);
+        let remaining = len - i - 1;
+        if remaining > 0 && remaining.is_multiple_of(3) {
+            result.push(',');
+        }
+    }
+
+    format!("{}.{}", result, decimal_part)
+}
+
+pub async fn get_stock_price(
+    ticker: &str,
+) -> Result<(String, String), Box<dyn Error + Send + Sync>> {
     use yahoo_finance_api as yahoo;
 
     let provider = match yahoo::YahooConnector::new() {
@@ -221,7 +244,10 @@ pub async fn get_stock_price(ticker: &str) -> Result<(String, f64), Box<dyn Erro
         let sign = if change_percent >= 0.0 { "+" } else { "" };
         let ratio_str = format!("{}{:.2}%", sign, change_percent);
 
-        Ok((ratio_str, current_price))
+        // Format price with comma separators
+        let formatted_price = format_price_with_comma(current_price);
+
+        Ok((ratio_str, formatted_price))
     } else {
         println!("Warning: No stock data found for ticker: {}", ticker);
         Err("株価情報を取得できませんでした".into())
