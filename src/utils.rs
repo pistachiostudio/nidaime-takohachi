@@ -257,7 +257,7 @@ pub async fn get_stock_price(
         };
 
         // Combine price change and percentage
-        let ratio_str = format!("{} ({})", price_change_str, percent_str);
+        let ratio_str = format!("({}, {})", price_change_str, percent_str);
 
         // Format current price with comma separators
         let formatted_price = format_price_with_comma(current_price);
