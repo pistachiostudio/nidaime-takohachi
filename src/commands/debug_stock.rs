@@ -24,7 +24,7 @@ pub async fn run(
                 _ => ticker,
             };
             format!(
-                "📈 **デバッグ: 株価情報取得テスト**\n\n**{}**: ${} ({})",
+                "📈 **デバッグ: 株価情報取得テスト**\n\n**{}**: ${} {}",
                 ticker_name, price, ratio_str
             )
         }

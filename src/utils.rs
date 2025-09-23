@@ -235,16 +235,31 @@ pub async fn get_stock_price(
     if let Some(quote) = quotes.first() {
         let current_price = quote.close;
         let previous_close = quote.open;
+        let price_change = current_price - previous_close;
         let change_percent = if previous_close != 0.0 {
             ((current_price - previous_close) / previous_close) * 100.0
         } else {
             0.0
         };
 
-        let sign = if change_percent >= 0.0 { "+" } else { "" };
-        let ratio_str = format!("{}{:.2}%", sign, change_percent);
+        // Format price difference with sign and comma separators
+        let price_change_str = if price_change >= 0.0 {
+            format!("+{}円", format_price_with_comma(price_change))
+        } else {
+            format!("{}円", format_price_with_comma(price_change))
+        };
 
-        // Format price with comma separators
+        // Format percentage with sign
+        let percent_str = if change_percent >= 0.0 {
+            format!("+{:.2}%", change_percent)
+        } else {
+            format!("{:.2}%", change_percent)
+        };
+
+        // Combine price change and percentage
+        let ratio_str = format!("{} ({})", price_change_str, percent_str);
+
+        // Format current price with comma separators
         let formatted_price = format_price_with_comma(current_price);
 
         Ok((ratio_str, formatted_price))
