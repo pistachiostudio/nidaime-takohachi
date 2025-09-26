@@ -219,7 +219,7 @@ pub async fn get_stock_price(
         }
     };
 
-    let response = match provider.get_latest_quotes(ticker, "2d").await {
+    let response = match provider.get_latest_quotes(ticker, "5d").await {
         Ok(response) => response,
         Err(e) => {
             println!(
