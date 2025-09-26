@@ -219,7 +219,7 @@ pub async fn get_stock_price(
         }
     };
 
-    let response = match provider.get_latest_quotes(ticker, "1d").await {
+    let response = match provider.get_latest_quotes(ticker, "2d").await {
         Ok(response) => response,
         Err(e) => {
             println!(
@@ -232,29 +232,33 @@ pub async fn get_stock_price(
 
     let quotes = response.quotes()?;
 
-    if let Some(quote) = quotes.first() {
-        let current_price = quote.close;
-        let previous_close = quote.open;
-        let price_change = current_price - previous_close;
-
-        // Format price difference with sign and comma separators
-        let price_change_str = if price_change >= 0.0 {
-            format!("+{}円", format_price_with_comma(price_change))
-        } else {
-            format!("{}円", format_price_with_comma(price_change))
-        };
-
-        // Combine price change and percentage
-        let ratio_str = format!("({})", price_change_str);
-
-        // Format current price with comma separators
-        let formatted_price = format_price_with_comma(current_price);
-
-        Ok((ratio_str, formatted_price))
-    } else {
-        println!("Warning: No stock data found for ticker: {}", ticker);
-        Err("株価情報を取得できませんでした".into())
+    // 最低2日分のデータが必要
+    if quotes.len() < 2 {
+        println!("Warning: Not enough stock data for ticker: {}", ticker);
+        return Err("株価情報を取得できませんでした".into());
     }
+
+    // 昨日の終値（インデックス0）と今日の終値（インデックス1）を取得
+    let stock_yesterday = quotes[0].close;
+    let stock_today = quotes[1].close;
+
+    // 差分を計算し、小数点第1位で四捨五入
+    let day_before_ratio = ((stock_today - stock_yesterday) * 10.0).round() / 10.0;
+
+    // 符号付きでカンマ区切りの価格差分をフォーマット
+    let price_change_str = if day_before_ratio >= 0.0 {
+        format!("+{}円", format_price_with_comma(day_before_ratio))
+    } else {
+        format!("{}円", format_price_with_comma(day_before_ratio))
+    };
+
+    // 価格変動を結合
+    let ratio_str = format!("({})", price_change_str);
+
+    // 現在価格をカンマ区切りでフォーマット
+    let formatted_price = format_price_with_comma(stock_today);
+
+    Ok((ratio_str, formatted_price))
 }
 
 pub async fn get_trivia(api_key: &str) -> Result<String, Box<dyn Error + Send + Sync>> {
