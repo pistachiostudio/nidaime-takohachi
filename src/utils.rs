@@ -233,7 +233,7 @@ pub async fn get_stock_price(
     let quotes = response.quotes()?;
 
     // 最低2日分のデータが必要
-    if quotes.len() < 5 {
+    if quotes.len() < 2 {
         println!("Warning: Not enough stock data for ticker: {}", ticker);
         return Err("株価情報を取得できませんでした".into());
     }
