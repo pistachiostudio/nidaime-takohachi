@@ -233,14 +233,15 @@ pub async fn get_stock_price(
     let quotes = response.quotes()?;
 
     // 最低2日分のデータが必要
-    if quotes.len() < 2 {
+    if quotes.len() < 5 {
         println!("Warning: Not enough stock data for ticker: {}", ticker);
         return Err("株価情報を取得できませんでした".into());
     }
 
-    // 昨日の終値（インデックス0）と今日の終値（インデックス1）を取得
-    let stock_yesterday = quotes[0].close;
-    let stock_today = quotes[1].close;
+    // 配列の最後から2番目（昨日）と最後（今日）の終値を取得
+    let len = quotes.len();
+    let stock_yesterday = quotes[len - 2].close;
+    let stock_today = quotes[len - 1].close;
 
     // 差分を計算し、小数点第1位で四捨五入
     let day_before_ratio = ((stock_today - stock_yesterday) * 10.0).round() / 10.0;
