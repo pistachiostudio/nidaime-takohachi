@@ -10,7 +10,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use super::ScheduledTask;
-use crate::utils;
+use nidaime_takohachi::utils;
 
 pub struct DailyMorningTask {
     channel_id: ChannelId,
@@ -63,7 +63,7 @@ impl DailyMorningTask {
         let month = now_jst.month();
         let day = now_jst.day();
 
-        let what_today = utils::get_what_today(month, day);
+        let what_today = utils::get_what_today(month, day).await;
 
         let tokyo_weather = match utils::get_weather("130010").await {
             Ok(weather_info) => weather_info,

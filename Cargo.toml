@@ -13,6 +13,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 reqwest = { version = "0.12.23", features = ["json"] }
 yahoo_finance_api = "4.1.0"
+scraper = "0.22"
+regex = "1.11"
+urlencoding = "2.1"
 
 [dependencies.serenity]
 version = "0.12.4"

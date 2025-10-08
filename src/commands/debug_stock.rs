@@ -14,7 +14,7 @@ pub async fn run(
         .and_then(|opt| opt.value.as_str())
         .unwrap_or("^N225");
 
-    let response_content = match crate::utils::get_stock_price(ticker).await {
+    let response_content = match nidaime_takohachi::utils::get_stock_price(ticker).await {
         Ok((ratio_str, price)) => {
             let ticker_name = match ticker {
                 "^N225" => "日経平均株価",

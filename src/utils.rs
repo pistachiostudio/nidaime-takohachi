@@ -1,6 +1,8 @@
+use rand::seq::SliceRandom;
+use regex::Regex;
+use scraper::{Html, Selector};
 use serde::Deserialize;
 use serde_json::json;
-use std::collections::HashMap;
 use std::error::Error;
 
 #[derive(Debug, Deserialize)]
@@ -69,28 +71,137 @@ struct Part {
     text: String,
 }
 
-pub fn get_what_today(month: u32, day: u32) -> String {
-    let special_days: HashMap<(u32, u32), &str> = [
-        ((1, 1), "元日 🎍"),
-        ((2, 14), "バレンタインデー 💝"),
-        ((3, 3), "ひな祭り 🎎"),
-        ((4, 1), "エイプリルフール 🃏"),
-        ((5, 5), "こどもの日 🎏"),
-        ((7, 7), "七夕 🎋"),
-        ((10, 31), "ハロウィン 🎃"),
-        ((12, 24), "クリスマスイブ 🎄"),
-        ((12, 25), "クリスマス 🎅"),
-        ((12, 31), "大晦日 🎊"),
-    ]
-    .iter()
-    .cloned()
-    .collect();
+pub async fn get_what_today(month: u32, day: u32) -> String {
+    // Wikimedia Foundation User-Agent Policy 準拠の User-Agent
+    // 参考: https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
+    let app_name = "nidaime-takohachi";
+    let app_version = "0.1.0";
+    let app_url = "https://github.com/pistachiostudio/nidaime-takohachi";
+    let app_contact = "info@pistachiostudio.net";
+    let user_agent = format!(
+        "{}/{} (+{}; {})",
+        app_name, app_version, app_url, app_contact
+    );
 
-    if let Some(event) = special_days.get(&(month, day)) {
-        format!("今日は{}です！", event)
-    } else {
-        format!("{}月{}日です。", month, day)
+    let base_url = "https://ja.wikipedia.org/wiki/Wikipedia:";
+    let uri = format!("今日は何の日_{}月", month);
+    let url = format!("{}{}", base_url, urlencoding::encode(&uri));
+
+    // HTTP リクエストを送信
+    let client = reqwest::Client::new();
+    let response = match client
+        .get(&url)
+        .header("User-Agent", user_agent)
+        .send()
+        .await
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            println!(
+                "Wikipedia への HTTP リクエストに失敗しました - URL: {}, エラー: {}",
+                url, e
+            );
+            return format!("{}月{}日です。", month, day);
+        }
+    };
+
+    let html = match response.text().await {
+        Ok(text) => text,
+        Err(e) => {
+            println!("レスポンステキストの取得に失敗しました - エラー: {}", e);
+            return format!("{}月{}日です。", month, day);
+        }
+    };
+
+    // HTML をパース
+    let document = Html::parse_document(&html);
+
+    // 指定された日付の見出しを探す（h2 要素）
+    let target_text = format!("{}月{}日", month, day);
+    let h2_selector = match Selector::parse("h2") {
+        Ok(sel) => sel,
+        Err(_) => return format!("{}月{}日です。", month, day),
+    };
+
+    let mut h2_element = None;
+    for h2 in document.select(&h2_selector) {
+        let text = h2.text().collect::<String>();
+        if text == target_text {
+            h2_element = Some(h2);
+            break;
+        }
     }
+
+    let h2_element = match h2_element {
+        Some(h) => h,
+        None => {
+            return format!("{}月{}日です。", month, day);
+        }
+    };
+
+    // h2 の次の要素を探して ul を見つける
+    let mut current = match h2_element.parent() {
+        Some(parent) => parent,
+        None => return format!("{}月{}日です。", month, day),
+    };
+
+    let ul_element = loop {
+        current = match current.next_sibling() {
+            Some(sibling) => sibling,
+            None => {
+                return format!("{}月{}日です。", month, day);
+            }
+        };
+
+        if current.value().is_element() && current.value().as_element().unwrap().name() == "ul" {
+            break current;
+        }
+    };
+
+    // ul 内のすべての li 要素を取得
+    let li_selector = match Selector::parse("li") {
+        Ok(sel) => sel,
+        Err(_) => return format!("{}月{}日です。", month, day),
+    };
+
+    // ul_element から直接 li 要素を検索
+    let items: Vec<String> = document
+        .select(&li_selector)
+        .filter_map(|li| {
+            // 親要素を辿って ul_element の子孫かチェック
+            let mut ancestor = li.parent();
+            let mut is_descendant = false;
+            while let Some(node) = ancestor {
+                if std::ptr::eq(node.value(), ul_element.value()) {
+                    is_descendant = true;
+                    break;
+                }
+                ancestor = node.parent();
+            }
+
+            if !is_descendant {
+                return None;
+            }
+
+            // HTML タグを除去してテキストを取得
+            let re = Regex::new(r"<[^>]+>").unwrap();
+            let html = li.html();
+            let text = re.replace_all(&html, "").trim().to_string();
+
+            if text.is_empty() { None } else { Some(text) }
+        })
+        .collect();
+
+    if items.is_empty() {
+        println!("項目が見つかりませんでした");
+        return format!("{}月{}日です。", month, day);
+    }
+
+    // ランダムに1つ選択
+    let mut rng = rand::thread_rng();
+    let selected = items.choose(&mut rng).unwrap();
+
+    format!("今日は何の日: {}", selected)
 }
 
 pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send + Sync>> {

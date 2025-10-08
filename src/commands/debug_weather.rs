@@ -14,7 +14,7 @@ pub async fn run(
         .and_then(|opt| opt.value.as_str())
         .unwrap_or("130010");
 
-    let response_content = match crate::utils::get_weather(citycode).await {
+    let response_content = match nidaime_takohachi::utils::get_weather(citycode).await {
         Ok(weather_info) => format!("🌤️ **デバッグ: 天気情報取得テスト**\n\n{}", weather_info),
         Err(e) => format!("❌ 天気情報の取得に失敗しました: {}", e),
     };
