@@ -201,7 +201,7 @@ pub async fn get_what_today(month: u32, day: u32) -> String {
     let mut rng = rand::thread_rng();
     let selected = items.choose(&mut rng).unwrap();
 
-    format!("今日は何の日: {}", selected)
+    selected.to_string()
 }
 
 pub async fn get_weather(citycode: &str) -> Result<String, Box<dyn Error + Send + Sync>> {

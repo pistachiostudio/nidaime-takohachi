@@ -56,7 +56,7 @@ async fn get_stock_price(ticker: &str) -> Result<(String, String), Box<dyn Error
     // 取得したデータをループで表示
     println!("\n取得したデータ (最大5日分):");
     for (i, quote) in quotes.iter().enumerate() {
-        let date = Utc.timestamp_opt(quote.timestamp as i64, 0).unwrap();
+        let date = Utc.timestamp_opt(quote.timestamp, 0).unwrap();
         let date_tokyo = date.with_timezone(&Tokyo);
         println!(
             "[Day {}] Date: {}, close: {:.2}, low: {:.2}, high: {:.2}, open: {:.2}, volume: {}, adjclose: {:.2}",
