@@ -16,6 +16,7 @@ yahoo_finance_api = "4.1.0"
 scraper = "0.22"
 regex = "1.11"
 urlencoding = "2.1"
+jsonwebtoken = "9"
 
 [dependencies.serenity]
 version = "0.12.4"

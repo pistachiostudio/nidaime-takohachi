@@ -41,6 +41,10 @@ impl EventHandler for Handler {
                     commands::debug_stock::run(&ctx, &command).await.unwrap();
                     None
                 }
+                "dic" => {
+                    commands::dic::run(&ctx, &command).await.unwrap();
+                    None
+                }
                 _ => Some("not implemented :(".to_string()),
             };
 
@@ -68,6 +72,11 @@ impl EventHandler for Handler {
             commands::count::register(),
             commands::marimo::register(),
         ];
+
+        // dic コマンドを条件付きで追加
+        if config.dic.is_some() {
+            command_list.push(commands::dic::register());
+        }
 
         // デバッグコマンドを条件付きで追加
         if config.debug_slash_commands {
