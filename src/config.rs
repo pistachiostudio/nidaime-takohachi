@@ -12,6 +12,7 @@ pub struct Config {
     pub scheduled_tasks: ScheduledTasksConfig,
     #[serde(default)]
     pub debug_slash_commands: bool,
+    pub dic: Option<DicConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -29,6 +30,13 @@ pub struct DailyMorningTaskConfig {
     pub enabled: bool,
     pub channel_id: u64,
     pub gemini_api_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DicConfig {
+    pub spreadsheet_id: String,
+    pub service_account_key_path: String,
+    pub db_spreadsheet_url: String,
 }
 
 impl Config {
