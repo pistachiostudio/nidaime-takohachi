@@ -13,6 +13,7 @@ pub struct Config {
     #[serde(default)]
     pub debug_slash_commands: bool,
     pub dic: Option<DicConfig>,
+    pub gemini: Option<GeminiConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -30,6 +31,11 @@ pub struct DailyMorningTaskConfig {
     pub enabled: bool,
     pub channel_id: u64,
     pub gemini_api_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GeminiConfig {
+    pub api_key: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
