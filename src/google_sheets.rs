@@ -38,7 +38,7 @@ pub struct TriggerEntry {
 async fn get_access_token(
     service_account_key_path: &str,
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-    let key_data = std::fs::read_to_string(service_account_key_path)?;
+    let key_data = tokio::fs::read_to_string(service_account_key_path).await?;
     let key: ServiceAccountKey = serde_json::from_str(&key_data)?;
 
     let now = chrono::Utc::now().timestamp();
@@ -64,6 +64,7 @@ async fn get_access_token(
         .send()
         .await?;
 
+    let response = response.error_for_status()?;
     let token_response: TokenResponse = response.json().await?;
     Ok(token_response.access_token)
 }
@@ -83,6 +84,7 @@ pub async fn search_trigger(
     let client = reqwest::Client::new();
     let response = client.get(&url).bearer_auth(&access_token).send().await?;
 
+    let response = response.error_for_status()?;
     let sheets_response: SheetsResponse = response.json().await?;
 
     let values = match sheets_response.values {
