@@ -45,6 +45,10 @@ impl EventHandler for Handler {
                     commands::dic::run(&ctx, &command).await.unwrap();
                     None
                 }
+                "gemini" => {
+                    commands::gemini::run(&ctx, &command).await.unwrap();
+                    None
+                }
                 _ => Some("not implemented :(".to_string()),
             };
 
@@ -76,6 +80,11 @@ impl EventHandler for Handler {
         // dic コマンドを条件付きで追加
         if config.dic.is_some() {
             command_list.push(commands::dic::register());
+        }
+
+        // gemini コマンドを条件付きで追加
+        if config.gemini.is_some() {
+            command_list.push(commands::gemini::register());
         }
 
         // デバッグコマンドを条件付きで追加
