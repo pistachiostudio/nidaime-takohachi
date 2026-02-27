@@ -28,5 +28,8 @@
     "spreadsheet_id": "YOUR_SPREADSHEET_ID",
     "service_account_key_path": "/path/to/service-account-key.json",
     "db_spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit#gid=1264027664&range=A1"
+  },
+  "gemini": {
+    "api_key": "YOUR_GEMINI_API_KEY"
   }
 }
