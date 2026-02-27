@@ -101,41 +101,75 @@ pub async fn run(ctx: &Context, interaction: &CommandInteraction) -> Result<(), 
         .await;
 
     let answer = match response {
-        Ok(res) => match res.json::<GeminiResponse>().await {
-            Ok(gemini_res) => {
-                match gemini_res
-                    .candidates
-                    .into_iter()
-                    .next()
-                    .and_then(|c| c.content.parts.into_iter().next())
-                    .map(|p| p.text)
-                {
-                    Some(text) => text,
-                    None => {
-                        interaction
-                            .edit_response(
-                                &ctx.http,
-                                EditInteractionResponse::new().content(
-                                    ":warning: Gemini APIからの応答を解析できませんでした。",
-                                ),
-                            )
-                            .await?;
-                        return Ok(());
-                    }
+        Ok(res) => {
+            let status = res.status();
+            let body = match res.text().await {
+                Ok(t) => t,
+                Err(e) => {
+                    println!("Failed to read Gemini response body: {}", e);
+                    interaction
+                        .edit_response(
+                            &ctx.http,
+                            EditInteractionResponse::new().content(
+                                ":warning: Gemini APIのレスポンス読み取りに失敗しました。",
+                            ),
+                        )
+                        .await?;
+                    return Ok(());
                 }
-            }
-            Err(e) => {
-                println!("Failed to parse Gemini response: {}", e);
+            };
+
+            if !status.is_success() {
+                println!("Gemini API error: HTTP {} - {}", status, body);
                 interaction
                     .edit_response(
                         &ctx.http,
-                        EditInteractionResponse::new()
-                            .content(":warning: Gemini APIのレスポンスの解析に失敗しました。"),
+                        EditInteractionResponse::new().content(format!(
+                            ":warning: Gemini APIがエラーを返しました。(HTTP {})",
+                            status
+                        )),
                     )
                     .await?;
                 return Ok(());
             }
-        },
+
+            match serde_json::from_str::<GeminiResponse>(&body) {
+                Ok(gemini_res) => {
+                    match gemini_res
+                        .candidates
+                        .into_iter()
+                        .next()
+                        .and_then(|c| c.content.parts.into_iter().next())
+                        .map(|p| p.text)
+                    {
+                        Some(text) => text,
+                        None => {
+                            println!("Gemini response has no candidates/parts: {}", body);
+                            interaction
+                                .edit_response(
+                                    &ctx.http,
+                                    EditInteractionResponse::new().content(
+                                        ":warning: Gemini APIからの応答を解析できませんでした。",
+                                    ),
+                                )
+                                .await?;
+                            return Ok(());
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("Failed to parse Gemini response ({}): {}", e, body);
+                    interaction
+                        .edit_response(
+                            &ctx.http,
+                            EditInteractionResponse::new()
+                                .content(":warning: Gemini APIのレスポンスの解析に失敗しました。"),
+                        )
+                        .await?;
+                    return Ok(());
+                }
+            }
+        }
         Err(e) => {
             println!("Gemini API request failed: {}", e);
             interaction
