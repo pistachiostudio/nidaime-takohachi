@@ -6,8 +6,7 @@ use serenity::prelude::*;
 
 use crate::config::Config;
 
-const DEFAULT_CHARACTER: &str =
-    "あなたはチャットコミュニティのみんなに愛されるBotです。みんなからくるいろんな質問にバッチリ答えてね。";
+const DEFAULT_CHARACTER: &str = "あなたはチャットコミュニティのみんなに愛されるBotです。みんなからくるいろんな質問にバッチリ答えてね。";
 const GEMINI_MODEL: &str = "gemini-2.5-pro";
 
 #[derive(Deserialize)]
