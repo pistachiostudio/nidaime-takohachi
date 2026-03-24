@@ -375,7 +375,7 @@ pub async fn get_stock_price(
 
 pub async fn get_trivia(api_key: &str) -> Result<String, Box<dyn Error + Send + Sync>> {
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={}",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={}",
         api_key
     );
 
