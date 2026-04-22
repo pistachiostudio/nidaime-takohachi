@@ -3,6 +3,7 @@ mod config;
 mod scheduled_tasks;
 
 use config::Config;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
@@ -11,7 +12,10 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 
-struct Handler;
+#[derive(Default)]
+struct Handler {
+    scheduled_tasks_started: AtomicBool,
+}
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -104,10 +108,18 @@ impl EventHandler for Handler {
 
         // println!("I created the following global slash command: {guild_command:#?}");
 
-        // スケジュールタスクを開始
-        let tasks = scheduled_tasks::create_scheduled_tasks(&config.scheduled_tasks);
-        scheduled_tasks::start_scheduled_tasks(ctx.clone(), tasks).await;
-        println!("Scheduled tasks have been started.");
+        // スケジュールタスクを開始（ready() は再接続時に再発火するためガードが必要）
+        if self
+            .scheduled_tasks_started
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .is_ok()
+        {
+            let tasks = scheduled_tasks::create_scheduled_tasks(&config.scheduled_tasks);
+            scheduled_tasks::start_scheduled_tasks(ctx.clone(), tasks).await;
+            println!("Scheduled tasks have been started.");
+        } else {
+            println!("Scheduled tasks already started, skipping.");
+        }
     }
 }
 
@@ -121,7 +133,7 @@ async fn main() {
 
     // Build our client.
     let mut client = Client::builder(token, GatewayIntents::empty())
-        .event_handler(Handler)
+        .event_handler(Handler::default())
         .await
         .expect("Error creating client");
 
