@@ -75,9 +75,13 @@ impl DailyMorningTask {
         };
 
         let trivia = if let Some(api_key) = &self.gemini_api_key {
-            utils::get_trivia(api_key)
-                .await
-                .unwrap_or_else(|_| "今日の雑学: 知識は力なり！".to_string())
+            match utils::get_trivia(api_key).await {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("[{}] Gemini API error: {}", self.name(), e);
+                    "今日の雑学: 知識は力なり！".to_string()
+                }
+            }
         } else {
             "今日の雑学: APIキーが設定されていません".to_string()
         };
