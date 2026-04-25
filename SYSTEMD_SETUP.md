@@ -129,11 +129,54 @@ sudo systemctl status takohachi
 sudo journalctl -u takohachi -f
 ```
 
+最新の N 行を確認：
+
+```bash
+sudo journalctl -u takohachi -n 100
+```
+
 過去のログを確認：
 
 ```bash
 sudo journalctl -u takohachi --since "1 hour ago"
 sudo journalctl -u takohachi --since today
+
+# 時間範囲を指定
+sudo journalctl -u takohachi --since "2026-04-25 08:00:00" --until "2026-04-25 12:00:00"
+```
+
+エラーのみ確認：
+
+```bash
+sudo journalctl -u takohachi -p err
+```
+
+#### 長い行が見切れる場合
+
+`journalctl` は端末幅に合わせて行を折り返すことがあります。以下の方法で全文を確認できます。
+
+ページャーを無効にして全文表示：
+
+```bash
+sudo journalctl -u takohachi --no-pager
+```
+
+`less` で横スクロール（左右矢印キーで移動）：
+
+```bash
+sudo journalctl -u takohachi | less -S
+```
+
+`cat` にパイプして折り返しを防ぐ：
+
+```bash
+SYSTEMD_COLORS=0 sudo journalctl -u takohachi --no-pager | cat
+```
+
+JSON 形式で出力（構造化ログの場合）：
+
+```bash
+sudo journalctl -u takohachi -o json-pretty
 ```
 
 ## トラブルシューティング
