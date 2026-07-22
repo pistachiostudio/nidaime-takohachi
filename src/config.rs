@@ -46,9 +46,34 @@ pub struct DicConfig {
 }
 
 impl Config {
-    /// 設定ファイルを読み込む
+    /// 設定を読み込む
+    ///
+    /// 環境変数 `CONFIG_JSON` が設定されていればそちらを優先し、
+    /// なければ `config.json` ファイルから読み込む（ローカル開発用）。
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
+        if let Ok(json) = std::env::var("CONFIG_JSON") {
+            let config: Config = serde_json::from_str(&json)?;
+            config.write_service_account_key_if_present()?;
+            return Ok(config);
+        }
         Self::load_from_path("config.json")
+    }
+
+    /// `GOOGLE_SERVICE_ACCOUNT_KEY_JSON` 環境変数が設定されていれば、
+    /// `dic.service_account_key_path` が指すパスにその内容を書き出す。
+    /// Railway のようなコンテナ環境では鍵ファイルを直接配置できないための対応。
+    fn write_service_account_key_if_present(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let (Some(dic), Ok(key_json)) = (
+            &self.dic,
+            std::env::var("GOOGLE_SERVICE_ACCOUNT_KEY_JSON"),
+        ) else {
+            return Ok(());
+        };
+        if let Some(parent) = Path::new(&dic.service_account_key_path).parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(&dic.service_account_key_path, key_json)?;
+        Ok(())
     }
 
     /// 指定されたパスから設定ファイルを読み込む
