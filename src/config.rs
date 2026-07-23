@@ -63,10 +63,9 @@ impl Config {
     /// `dic.service_account_key_path` が指すパスにその内容を書き出す。
     /// Railway のようなコンテナ環境では鍵ファイルを直接配置できないための対応。
     fn write_service_account_key_if_present(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let (Some(dic), Ok(key_json)) = (
-            &self.dic,
-            std::env::var("GOOGLE_SERVICE_ACCOUNT_KEY_JSON"),
-        ) else {
+        let (Some(dic), Ok(key_json)) =
+            (&self.dic, std::env::var("GOOGLE_SERVICE_ACCOUNT_KEY_JSON"))
+        else {
             return Ok(());
         };
         if let Some(parent) = Path::new(&dic.service_account_key_path).parent() {
